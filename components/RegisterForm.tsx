@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { primeSound } from "@/lib/sound";
 
 const SCRIPT_URL = process.env.NEXT_PUBLIC_SHEETS_ENDPOINT ?? "";
 
@@ -96,6 +97,7 @@ export default function RegisterForm({
     // La animación de gracias parte de inmediato. Google Apps Script puede
     // tardar varios segundos en responder, así que el guardado sigue en
     // segundo plano y, si falla, volvemos al formulario con los datos intactos.
+    primeSound(); // el audio solo se habilita dentro de un toque del usuario
     onSuccess();
 
     fetch(SCRIPT_URL, {

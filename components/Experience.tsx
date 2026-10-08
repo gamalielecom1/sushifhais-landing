@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import RegisterForm from "./RegisterForm";
+import { playReveal } from "@/lib/sound";
 
 // Momento del "golpe": la foto ya casi terminó de entrar
 const IMPACT_MS = 950;
@@ -52,6 +53,8 @@ export default function Experience() {
 
   useEffect(() => {
     if (!done) return;
+
+    playReveal(IMPACT_MS / 1000);
 
     // El "golpe" también se siente: una vibración corta donde el celular lo permita
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
