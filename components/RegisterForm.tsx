@@ -1,19 +1,18 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import ThankYouScreen from "./ThankYouScreen";
 
 const SCRIPT_URL = process.env.NEXT_PUBLIC_SHEETS_ENDPOINT ?? "";
 
-type Status = "idle" | "loading" | "success" | "error";
+type Status = "idle" | "loading" | "error";
 
 const inputClass =
-  "w-full rounded-2xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 text-[16px] text-neutral-900 placeholder-neutral-400 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20";
+  "w-full rounded-2xl border border-neutral-300 bg-neutral-50 px-4 py-3 short:py-1.5 text-[16px] text-neutral-900 placeholder-neutral-400 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20";
 
 const selectClass =
-  "w-full appearance-none rounded-2xl border border-neutral-300 bg-neutral-50 px-4 py-3.5 pr-9 text-[16px] text-neutral-900 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20";
+  "w-full appearance-none rounded-2xl border border-neutral-300 bg-neutral-50 px-4 py-3 short:py-1.5 pr-9 text-[16px] text-neutral-900 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20";
 
-const labelClass = "mb-1.5 block text-sm font-medium text-neutral-700";
+const labelClass = "mb-1 short:mb-0.5 block text-sm short:text-[13px] font-medium text-neutral-700";
 
 const MESES = [
   "Enero",
@@ -53,14 +52,20 @@ function ChevronIcon() {
   );
 }
 
-export default function RegisterForm() {
+export default function RegisterForm({
+  onSuccess,
+  onError,
+}: {
+  onSuccess: () => void;
+  onError: () => void;
+}) {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [dia, setDia] = useState("");
   const [mes, setMes] = useState("");
   const [anio, setAnio] = useState("");
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!SCRIPT_URL) {
@@ -88,30 +93,34 @@ export default function RegisterForm() {
     setStatus("loading");
     setErrorMsg("");
 
-    try {
-      await fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ nombre, telefono, correo, cumpleanos }),
-      });
-      setStatus("success");
-      form.reset();
-      setDia("");
-      setMes("");
-      setAnio("");
-    } catch (err) {
-      setStatus("error");
-      setErrorMsg("No se pudo enviar el registro. Intenta de nuevo.");
-    }
-  }
+    // La animación de gracias parte de inmediato. Google Apps Script puede
+    // tardar varios segundos en responder, así que el guardado sigue en
+    // segundo plano y, si falla, volvemos al formulario con los datos intactos.
+    onSuccess();
 
-  if (status === "success") {
-    return <ThankYouScreen onClose={() => setStatus("idle")} />;
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      keepalive: true,
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ nombre, telefono, correo, cumpleanos }),
+    })
+      .then(() => {
+        setStatus("idle");
+        form.reset();
+        setDia("");
+        setMes("");
+        setAnio("");
+      })
+      .catch(() => {
+        setStatus("error");
+        setErrorMsg("No se pudo enviar el registro. Intenta de nuevo.");
+        onError();
+      });
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3 short:gap-2">
       <div>
         <label htmlFor="nombre" className={labelClass}>
           Nombre y apellido
@@ -227,7 +236,7 @@ export default function RegisterForm() {
       <button
         type="submit"
         disabled={status === "loading"}
-        className="mt-1 w-full rounded-2xl bg-brand-600 px-6 py-4 text-base font-semibold text-white shadow-sm transition active:scale-[0.98] hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-1 w-full rounded-2xl bg-brand-600 px-6 py-3.5 short:py-2.5 text-base font-semibold text-white shadow-sm transition active:scale-[0.98] hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {status === "loading" ? "Enviando..." : "Recibir mi sorpresa"}
       </button>
